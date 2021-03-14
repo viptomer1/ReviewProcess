@@ -1,60 +1,353 @@
-import logo from './logo.svg';
-import './App.css';
-
-
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
-import Home from './components/Home';
-import Product from './components/Product';
+import ProductItem from "./ProductItem";
+import './home.css';
 
-class App extends Component { //
+class Home extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      products: [], currentProducts: [], currentPage: null, totalPages: null, pageLimit :20
+    };
+  }
+  
+  componentDidMount() {
+    fetch('https://api.johnlewis.com/search/api/rest/v2/catalog/products/search/keyword?q=dishwasher&key=AIzaSyDD_6O5gUgC4tRW5f9kxC0_76XRC8W7_mI')
+    .then(res => res.json())
+    .then((data) => { console.log('Res ---> ',data);
+      this.setState({ products: data.products, totalPages: Math.ceil(data.products.length/ this.state.pageLimit), 
+        currentPage:1 ,slideIndex:0})
+    })
+    .catch(console.log)
+  }
+
+  //method for change page
+  onPageChanged(n) {
+    const pageLimit = this.state.pageLimit;
+    let slideIndex= this.state.slideIndex;
+    if (n > this.state.totalPages) {slideIndex = 1}
+    if (n < 1) {slideIndex  = this.state.totalPages}
+    const offset = (slideIndex - 1) * pageLimit;
+    const currentProducts = this.state.products.slice(offset, offset + pageLimit);  
+    console.log('<<<<<<  Home page number >>>> ---> ', slideIndex );
+
+    let pageItems = currentProducts.map((product, index) => (
+      <ProductItem
+        context = {this.props}
+        product={product}
+        key={index}
+      />
+    ));
+    this.setState({ pageItems, slideIndex});
+  }
+
+  //Method for sliding pages right/left
+  movePages(n) { 
+    this.onPageChanged(this.state.slideIndex  += n);
+  }
+  //Method to render first time element for 0th index
+  renderFirst(){
+    let slideIndex= this.state.slideIndex;
+    slideIndex = slideIndex+1;
+    let currentProducts = this.state.products.slice(0,  this.state.pageLimit);  
+    console.log('<<<<<<  Home page first==== >>>> ---> ', slideIndex );
+    let pageItems = currentProducts.map((product, index) => (
+        <ProductItem
+          context = {this.props}
+          product={product}
+          key={index}
+        />
+      ));
+    this.setState({ pageItems, slideIndex});
+  }
+
   render() {
+    //let products = this.state.products;
+    const { products, pageItems,  currentPage, totalPages ,slideIndex} = this.state;
+    // [
+    //   {
+    //     "id": "hdmdu0t80yjkfqselfc",
+    //     "name": "shoes",
+    //     "img": "https://johnlewis.scene7.com/is/image/JohnLewis/238008957?", 
+    //     "stock": 10,
+    //     "price": 399.99,
+    //     "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+    //     "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    //   },
+    //   {
+    //     "id": "3dc7fiyzlfmkfqseqam",
+    //     "name": "bags",
+    //     "stock": 20,
+    //     "img": "https://johnlewis.scene7.com/is/image/JohnLewis/238008957?", 
+        
+    //     "price": 299.99,
+    //     "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+    //     "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    //   },
+    //   {
+    //     "id": "aoe8wvdxvrkfqsew67",
+    //     "name": "shirts",
+    //     "stock": 15,
+    //     "img": "https://johnlewis.scene7.com/is/image/JohnLewis/238008957?", 
+        
+    //     "price": 149.99,
+    //     "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+    //     "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    //   },
+    //   {
+    //     "id": "bmfrurdkswtkfqsf15j",
+    //     "name": "shorts",
+    //     "stock": 0,
+    //     "img": "https://johnlewis.scene7.com/is/image/JohnLewis/238008957?", 
+        
+    //     "price": 109.99,
+    //     "shortDesc": "Nulla facilisi. Curabitur at lacus ac velit ornare lobortis.",
+    //     "description": "Cras sagittis. Praesent nec nisl a purus blandit viverra. Ut leo. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Fusce a quam."
+    //   }
+    // ]; 
+
+
+
     return (
-    <Router>
-        <div>
-          {/* <h2>Welcome to React Router Tutorial</h2>
-          <nav className="navbar navbar-expand-lg navbar-light bg-light">
-          <ul className="navbar-nav mr-auto">
-            <li><Link to={'/'} className="nav-link"> Home </Link></li>
-            <li><Link to={'/product'} className="nav-link">Prod</Link></li>
-          </ul>
-          </nav>
-          <hr /> */}
-          <Switch>
-              <Route exact path='/' component={Home} />
-              <Route path='/product' component={Product} />
-          </Switch>
+      
+    <div>
+
+          
+    <div className="App-header" style={{ flex: 1, alignItems: 'center' }}
+      >Dishwashers ({products.length})</div>
+      <br />
+
+      <div className="container">
+        { currentPage && (
+                <span className="current-page d-inline-block h-100 pl-4 text-secondary">
+                  Page <span className="font-weight-bold">{ slideIndex }</span> / <span className="font-weight-bold">{ totalPages }</span>
+                </span>
+              ) }
+        <div className="cards">
+       
+          {products && products.length ? (
+            pageItems ? pageItems: this.renderFirst()
+          ) : (
+            <div className="column">
+              <span className="title has-text-grey-light">
+                No products found!
+              </span>
+            </div>
+          )}
         </div>
-      </Router>
+
+        <button className="prev1 mdl-button" style={{borderWidth:'0px', float:'left'}} onClick={() => this.movePages(-1)}>
+          <i className="fa fa-angle-left" style={{fontSize:'30px',color:'grey'}}></i>
+        </button>
+        <button className="next1 mdl-button" style={{borderWidth:'0px', float:'right'}} onClick={() => this.movePages(1)}>
+          <i className="fa fa-angle-right" style={{fontSize:'30px',color:'grey'}}></i>
+        </button>
+
+      </div>
+    
+      </div>
     );
   }
 }
 
-/*
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}*/
-
-export default App;
+export default Home;
 
 
----------------------
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
+
+-------------------
+import React, { Component } from 'react';
+import './home.css';
+
+class Product extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      product: {},
+      slideIndex :1,
+      selectedId : props.location.state.selectedId ? props.location.state.selectedId :'00000'
+    };
+  }
+  
+  componentDidMount() {
+    fetch('https://api.johnlewis.com/mobile-apps/api/v1/products/'+this.state.selectedId)
+    .then(res => res.json())
+    .then((data) => { console.log('Res ---> ',data);
+      this.setState({ product: data })
+    })
+    .catch(console.log)
+  }
+ 
+  // Mehtod render
+  render() {  
+    let product= this.state.product;
+    let slideIndex = 1;
+    //Method for show sliding image
+    function showSlides(n) {
+      var i;
+      var slides = document.getElementsByClassName("mySlides");
+      var dots = document.getElementsByClassName("demo");
+      if (n > slides.length) {slideIndex = 1}
+      if (n < 1) {slideIndex  = slides.length}
+      for (i = 0; i < slides.length; i++) {
+          slides[i].style.display = "none";
+      }
+      for (i = 0; i < dots.length; i++) {
+          dots[i].className = dots[i].className.replace(" active", "");
+      }
+      if(slides[slideIndex -1]){
+        slides[slideIndex -1].style.display = "block";
+      }
+
+    }
+    //Method for sliding image right/left
+    function moveSlides(n) { console.log('<<<<<<   back ./next >>>> ---> ', n);
+      showSlides(slideIndex  += n);
+    }
+    if(product.media){
+      showSlides(1 );
+    }
+
+    //rending the component
+    return (
+        
+      <div>
+
+
+
+      <div className="App-header" style={{ flex: 2, alignItems: 'left' }}>              
+        <div className="mdl-layout__header-row" style={{ paddingLeft: '2%'}}>
+            <button className="mdl-button" style={{borderWidth:'0px', float:'left'}} onClick={() => this.props.history.goBack()}>
+              <i className="fa fa-angle-left" style={{fontSize:'30px',color:'grey'}}></i>
+              </button>
+              <span className="mdl-layout-title" style={{width:'95%',textAlign:'center',  marginLeft: '2%', display:'block'}}>Product- {product.title}</span>
+        </div>
+      </div>
+
+        <div className="container">
+          <div className="cards1">
+            {product.title ? (
+              <div className="card1 column is-half">
+                
+                
+                <div className="swipe-container2" style={{
+                            width: `95%`, height: `500px`,
+                            backgroundColor: 'grey'
+                          }}
+                        >
+                    {product.media.images.urls.map((url, index) => ( 
+                        <div className="mySlides"  style={{ display:  index === 0 ? 'block':'none' }}>
+                          <img alt="" src={url} style={{width:"90%", height:"500px"}}/>
+                        </div>
+                        )) }
+                      {/* <a className="prev" onClick={() =>plusSlides(-1)}>prev</a>
+                      <a className="next" onClick={() =>plusSlides(1)}>next</a> */}
+                      
+                      <button className="prev mdl-button" style={{borderWidth:'0px', float:'left'}} onClick={() => moveSlides(-1)}>
+                        <i className="fa fa-angle-left" style={{fontSize:'30px',color:'grey'}}></i>
+                      </button>
+                      <button className="next mdl-button" style={{borderWidth:'0px', float:'left'}} onClick={() => moveSlides(1)}>
+                        <i className="fa fa-angle-right" style={{fontSize:'30px',color:'grey'}}></i>
+                      </button>
+
+                </div>
+
+
+
+                <div className="media-left">
+                      <br />something INFO below -------------------
+                  </div>
+        
+                  <div className="media-content">
+                    
+                    <div>{product.title}</div>
+                    <b style={{ textTransform: "capitalize" }}>
+                      {product.name}{" "}
+                      <span className="tag is-primary">£{product.price.now}</span>
+                    </b>
+                    
+                    <div className="is-clearfix" style={{color:'red'}}> {product.displaySpecialOffer}.</div>
+                    <div className="is-clearfix"> {product.additionalServices.includedServices}</div>
+                    
+                  </div>
+                
+
+                <br/><br/>
+                <div className="it-clearfix" style={{fontSize:'20px'}}> Product Information:</div>
+                <br /><br/>
+                    <div className="it" dangerouslySetInnerHTML={{ __html: product.details.productInformation}} ></div>
+                    <br/><div className="it">Product code: {product.code} </div>
+                    <br/><hr />
+
+                <div className="it-clearfix" style={{fontSize:'20px'}}> Product specification:</div>
+                <br /><br/>
+              
+                <div className="mdl-layout__header-row" style={{ paddingLeft: '2%'}}>
+                    <span className="mdl-button" style={{borderWidth:'0px', float:'left'}} >Standing</span>
+                      <span className="mdl-layout-title" style={{width:'95%',textAlign:'right',  marginLeft: '2%', display:'block'}}>Product- yes</span>
+                </div>
+                <br/><br/>    
+                  
+            </div>
+              
+
+            ) : (
+              <div className="column">
+                <span className="title has-text-grey-light">
+                  No product found!
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      
+          </div>
+      );
+  }
+}
+
+export default Product;
+
+---------------------------------app .css
+
+/* Design for Product description but we should put it in differnet css */
+img {
+  vertical-align: middle;
+  align-content: center;
+}
+/* Position the image container (needed to position the left and right arrows) */
+.swipe-container2 {
+  position: relative;
+}
+/* Hide the images by default */
+.mySlides {
+  display: none;
+}
+/* Next & previous buttons */
+.prev,
+.next {
+  cursor: pointer;
+  position: absolute;
+  top: 40%;
+  width: auto;
+  padding: 15px;
+  margin-top: 40px;
+  color: white;
+  background-color: lightgray;
+  font-size: 15px;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover,
+.next:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+
+
